@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Fesh.AutoCAD": {
+      "commandName": "Project"
+    },
+    "Profile 1": {
+      "commandName": "Executable"
+    }
+  }
+}

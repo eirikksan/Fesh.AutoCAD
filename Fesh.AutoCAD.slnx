@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Fesh.AutoCAD.Bootstrapper/Fesh.AutoCAD.Bootstrapper.fsproj" />
+  <Project Path="Fesh.AutoCAD/Fesh.AutoCAD.fsproj" />
+</Solution>

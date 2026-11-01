@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>    <!--inherited from Avalonedit ?-->
-    <TargetFrameworks>net48;net8.0-windows</TargetFrameworks>
+    <TargetFramework>net10.0-windows</TargetFramework>
 
     <LangVersion>preview</LangVersion>    <!-- to enable indexing from end via ^ -->
     <NeutralLanguage>en</NeutralLanguage>
@@ -31,16 +31,17 @@
 
     <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>    <!-- 1182: warn on unused variables -->
     <ChangelogFile>../CHANGELOG.md</ChangelogFile>    <!-- for Ionide.KeepAChangelog.Tasks -->
-    <Configurations>Release</Configurations>
+    <Configurations>Release;Debug</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Fesh.AutoCAD\Fesh.AutoCAD.fsproj" />
     <PackageReference Include="Ionide.KeepAChangelog.Tasks" Version="0.1.8" PrivateAssets="all" />
+    <PackageReference Update="FSharp.Core" Version="10.1.401" GeneratePathProperty="true" />
 
     <!--this reference is needed for tooling only, it might not be installed on host PC. (running the .NET Framework version) see also https://github.com/fsprojects/IfSharp/issues/213 -->
-    <PackageReference Include="NETStandard.Library" Version="2.0.3" Condition="'$(TargetFramework)' == 'net48'" GeneratePathProperty="true" />    <!-- Generated PathProperty will be 'PkgNETStandard_Library' -->
-    <PackageReference Include="Fesh" Version="0.21.0"  GeneratePathProperty="true" /> <!-- just to copy SyntaxHighlightingFSharp.xshd below -->
+    <PackageReference Include="NETStandard.Library" Version="2.0.3" Condition="'$(TargetFramework)' == 'net10.0-windows'" GeneratePathProperty="true" />    <!-- Generated PathProperty will be 'PkgNETStandard_Library' -->
+    <PackageReference Include="Fesh" Version="0.36.0" GeneratePathProperty="true" /> <!-- just to copy SyntaxHighlightingFSharp.xshd below -->
   </ItemGroup>
 
   <ItemGroup>
@@ -50,17 +51,17 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
 
-  <Target Name="CopyFilesOverAfterBuild" AfterTargets="Publish" >
+  <Target Name="CopyFilesOverAfterBuild" AfterTargets="Publish">
     <!-- to check output from Ionide.KeepAChangelog.Tasks current git tag in gh actions -->
     <WriteLinesToFile File="../ChangelogVersion.txt" Lines="@(CurrentReleaseChangelog)" Overwrite="true" ContinueOnError="false" />
 
     <!--netstandard dll is needed for editor tooling only, copy it because it might not be installed on host PC . see also  https://github.com/fsprojects/IfSharp/issues/213 -->
-    <Copy SourceFiles="$(PkgNETStandard_Library)/build/netstandard2.0/ref/netstandard.dll" DestinationFolder="$(PublishDir)" ContinueOnError="false" Condition="'$(TargetFramework)' == 'net48'" />
-    <Copy SourceFiles="$(PkgNETStandard_Library)/build/netstandard2.0/ref/netstandard.xml" DestinationFolder="$(PublishDir)" ContinueOnError="false" Condition="'$(TargetFramework)' == 'net48'" />
+    <Copy SourceFiles="$(PkgNETStandard_Library)/build/netstandard2.0/ref/netstandard.dll" DestinationFolder="$(PublishDir)" ContinueOnError="false" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
+    <Copy SourceFiles="$(PkgNETStandard_Library)/build/netstandard2.0/ref/netstandard.xml" DestinationFolder="$(PublishDir)" ContinueOnError="false" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
 
     <!--FSharp.Core.xml because <FSharpCoreIncludeDocFileInOutput> does not seem to work add it explicitly: -->
     <Copy SourceFiles="$(PkgFSharp_Core)/lib/netstandard2.0/FSharp.Core.xml" DestinationFolder="$(PublishDir)" ContinueOnError="false" />
-    <Copy SourceFiles="$(PkgFesh)/SyntaxHighlightingFSharp.xshd"             DestinationFolder="$(PublishDir)" ContinueOnError="false" />
+    <Copy SourceFiles="$(PkgFesh)/SyntaxHighlightingFSharp.xshd" DestinationFolder="$(PublishDir)" ContinueOnError="false" />
   </Target>
 
 </Project>

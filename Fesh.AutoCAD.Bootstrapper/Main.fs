@@ -32,15 +32,15 @@ module Main =
         vpk.SetAutoApplyOnStartup(false)
             |> ignore // to not install updates if they are downloaded
 
-        vpk.WithFirstRun(fun _ ->
+        vpk.OnFirstRun(fun _ ->
             AutoCAD.register(log)
             ) |> ignore // register the app with AutoCAD via xml file
 
-        vpk.WithBeforeUninstallFastCallback(fun _ ->
+        vpk.OnBeforeUninstallFastCallback(fun _ ->
             AutoCAD.unregister()
             ) |> ignore // delete xml file
 
-        vpk.WithRestarted(                  fun a ->
+        vpk.OnRestarted(                  fun a ->
             log.printfnBrush Brushes.DarkGreen $"Fesh.AutoCAD was updated to {a.Major}.{a.Minor}.{a.Patch} !"
             log.printfnBrush Brushes.Black $"\r\n\r\nYou can close this window now."
             ) |> ignore

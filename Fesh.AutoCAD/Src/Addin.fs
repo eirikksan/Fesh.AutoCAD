@@ -15,7 +15,6 @@ open Velopack
 open Velopack.Sources
 open Velopack.Locators
 open System.Reflection
-open Microsoft.Extensions.Logging
 
 module AppName =
     let get(year:string) =
@@ -115,35 +114,50 @@ type FeshAddin() =
 
     // Define the command method
     [<Runtime.CommandMethod("fesh")>]
-    member this.LaunchFeshWindow() =
-        // Your logic to launch the Fesh window
+    member _.LaunchFeshWindow() =
         let doc = Application.DocumentManager.MdiActiveDocument
         let ed = doc.Editor
         ed.WriteMessage("\nLaunching Fesh window...")
 
-        let winHandle = Diagnostics.Process.GetCurrentProcess().MainWindowHandle
-        let canRun = fun () -> true
+        try
+            let feshApp =
+                match DebugUtil.Fesh with
+                | Some fesh -> fesh
+                | None ->
+                    let winHandle = Diagnostics.Process.GetCurrentProcess().MainWindowHandle
+                    let canRun = fun () -> true
 
-        let appName = "AutoCAD 20XX" //AppName.get(commandData.Application.Application.VersionNumber)
-        let logo = new Uri("pack://application:,,,/Fesh.AutoCAD;component/Media32/logo.ico")
-        let hostData = {
-            hostName = appName
-            mainWindowHandel = winHandle
-            fsiCanRun =  canRun
-            logo = Some logo
-            defaultCode = Some (DefaultCode.get(appName))
-            hostAssembly = Some (Reflection.Assembly.GetAssembly(typeof<FeshAddin>))
-            }
+                    let appName = "AutoCAD 20XX" //AppName.get(commandData.Application.Application.VersionNumber)
+                    let logo = new Uri("pack://application:,,,/Fesh.AutoCAD;component/Media32/logo.ico")
+                    let hostData = {
+                        hostName = appName
+                        mainWindowHandel = winHandle
+                        fsiCanRun = canRun
+                        canRunAsync = false
+                        libFolders = [||]
+                        defines = [||]
+                        logo = Some logo
+                        defaultCode = Some (DefaultCode.get(appName))
+                        hostAssembly = Some (Reflection.Assembly.GetAssembly(typeof<FeshAddin>))
+                        }
 
-        let feshApp = Fesh.App.createEditorForHosting(hostData)
+                    let fesh = Fesh.App.createEditorForHosting(hostData)
+                    // Fesh initializes process-wide WPF metadata, so reuse it rather than creating another editor.
+                    fesh.Window.Closing.Add(fun e ->
+                        if not e.Cancel then
+                            e.Cancel <- true
+                            fesh.Window.Hide()
+                        )
+                    DebugUtil.Fesh <- Some fesh
+                    fesh
 
-        feshApp.Window.Show()
-
-
-
-        // Add the code to launch the Fesh window here
-        // For example, you might call a method from your Fesh application to show the window
-        // FeshApp.ShowWindow()
+            feshApp.Window.Show()
+            if feshApp.Window.WindowState = WindowState.Minimized then
+                feshApp.Window.WindowState <- WindowState.Normal
+            feshApp.Window.Activate() |> ignore
+        with ex ->
+            ed.WriteMessage($"\nCould not open Fesh:\n{ex}")
+            DebugUtil.alert $"Could not open Fesh:\r\n{ex}"
 
 [<assembly: Runtime.CommandClass(typeof<FeshAddin>)>]
 do()

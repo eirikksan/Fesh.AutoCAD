@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch AutoCAD 2027",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "preLaunchTask": "Build and start AutoCAD 2027",
+            "justMyCode": false
+        },
+        {
+            "name": "Attach to AutoCAD 2027",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "justMyCode": false
+        }
+    ]
+}

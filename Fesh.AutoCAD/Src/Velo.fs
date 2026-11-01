@@ -9,7 +9,6 @@ open Velopack
 open Velopack.Sources
 open Velopack.Locators
 open System.Reflection
-open Microsoft.Extensions.Logging
 
 module Velo =
 
@@ -37,15 +36,15 @@ module Velo =
 
                     if IO.File.Exists exePath then
 
-                        // Use reflection to call the internal constructor of WindowsVelopackLocator
-                        // https://github.com/velopack/velopack/issues/461
-                        let loc =
-                            try
-                                let locType = typeof<WindowsVelopackLocator>
-                                let ctor = locType.GetConstructor(BindingFlags.Instance ||| BindingFlags.NonPublic, null, [| typeof<string>; typeof<ILogger> |], null)
-                                ctor.Invoke([| exePath; null |]) :?> WindowsVelopackLocator
-                            with e ->
-                                failwithf $"Reflection Invoking the Constructor of WindowsVelopackLocator(\"{exePath}\", null) failed:\r\n{e}"
+                        let defaultProcess = DefaultProcessImpl(null)
+                        let bootstrapperProcess =
+                            { new IProcessImpl with
+                                member _.GetCurrentProcessPath() = exePath
+                                member _.GetCurrentProcessId() = defaultProcess.GetCurrentProcessId()
+                                member _.StartProcess(fileName, args, workingDirectory, showWindow) =
+                                    defaultProcess.StartProcess(fileName, args, workingDirectory, showWindow)
+                                member _.Exit(exitCode) = defaultProcess.Exit(exitCode) }
+                        let loc = WindowsVelopackLocator(bootstrapperProcess, null)
 
                         updateManager <- Some (new UpdateManager(source, locator = loc))
 

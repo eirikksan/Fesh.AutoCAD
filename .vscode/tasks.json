@@ -1,0 +1,40 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "msbuild",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build",
+			"label": "Build: solution",
+			"detail": "Build the Fesh.AutoCAD.slnx solution using dotnet build"
+		},
+		{
+			"label": "Start AutoCAD 2027",
+			"type": "process",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"start",
+				"",
+				"C:\\Program Files\\Autodesk\\AutoCAD 2027\\acad.exe",
+				"/b",
+				"${workspaceFolder}\\debug.lsp"
+			],
+			"options": {
+				"cwd": "C:\\Program Files\\Autodesk\\AutoCAD 2027"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build and start AutoCAD 2027",
+			"dependsOn": [
+				"Build: solution",
+				"Start AutoCAD 2027"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		}
+	]
+}
