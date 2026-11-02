@@ -18,12 +18,8 @@ module Main =
 
 
     let greet (log:AvalonLog) =
-        if AutoCAD.isNetFramework then
-            log.printfnBrush Brushes.Blue "Fesh.AutoCAD.Bootstrapper on .NET Framework 4.8"
-            log.printfnBrush Brushes.Blue "for Registration and Updating Fesh.AutoCAD with AutoCAD 2024 or earlier versions."
-        else
-            log.printfnBrush Brushes.Blue "Fesh.AutoCAD.Bootstrapper on .NET 8"
-            log.printfnBrush Brushes.Blue "for Registration and Updating Fesh.AutoCAD with AutoCAD 2025 or later versions."
+        log.printfnBrush Brushes.Blue "Fesh.AutoCAD installer | AutoCAD 2027 | .NET 10"
+        log.printfnBrush Brushes.Blue "Per-user installation. Administrator rights are not required."
 
 
     let velo(log:AvalonLog) =
@@ -32,17 +28,12 @@ module Main =
         vpk.SetAutoApplyOnStartup(false)
             |> ignore // to not install updates if they are downloaded
 
-        vpk.OnFirstRun(fun _ ->
-            AutoCAD.register(log)
-            ) |> ignore // register the app with AutoCAD via xml file
-
         vpk.OnBeforeUninstallFastCallback(fun _ ->
             AutoCAD.unregister()
-            ) |> ignore // delete xml file
+            ) |> ignore
 
         vpk.OnRestarted(                  fun a ->
             log.printfnBrush Brushes.DarkGreen $"Fesh.AutoCAD was updated to {a.Major}.{a.Minor}.{a.Patch} !"
-            log.printfnBrush Brushes.Black $"\r\n\r\nYou can close this window now."
             ) |> ignore
 
         vpk.Run() //https://docs.velopack.io/getting-started/csharp
@@ -50,8 +41,9 @@ module Main =
 
     [< EntryPoint >]
     [< STAThread >]
-    let main (_args: string []) : int =
+    let main (args: string []) : int =
         try
+            let app = Application()
             let log = AvalonLog()
             log.ShowLineNumbers <- false
             Console.SetOut   (log.GetTextWriter(Brushes.DarkGray))
@@ -60,12 +52,30 @@ module Main =
             velo(log) // this might kill the app early !
 
             let win = window(log)
-            // win.ContentRendered.Add(fun _ -> velo(log)) // delay till after render ?
-            let app  = Application() // do first so that pack Uris work
-            app.Run(win)
+            let mutable exitCode = 0
+            win.ContentRendered.Add(fun _ ->
+                try
+                    match args with
+                    | [| "--uninstall" |] ->
+                        AutoCAD.ensureAutoCADClosed()
+                        AutoCAD.unregister()
+                        log.printfnBrush Brushes.DarkGreen "Fesh.AutoCAD registration was removed. It will no longer load in AutoCAD."
+                        log.printfnBrush Brushes.Black $"Installed files remain in {AutoCAD.bundleFolder} and can now be deleted."
+                    | [||] | [| "--install" |] ->
+                        let manifest = AutoCAD.register()
+                        log.printfnBrush Brushes.DarkGreen $"Fesh.AutoCAD was installed successfully.\r\n{manifest}"
+                        log.printfnBrush Brushes.Black "Start AutoCAD 2027, open a drawing, and run FESH."
+                    | _ ->
+                        invalidArg "args" "Usage: Fesh.AutoCAD.Bootstrapper.exe [--install | --uninstall]"
+                    log.printfnBrush Brushes.Black "You can close this window now."
+                with error ->
+                    exitCode <- 1
+                    log.printfnBrush Brushes.Red $"Installation failed:\r\n{error.Message}")
+            app.Run(win) |> ignore
+            exitCode
 
         with e ->
-            eprintfn $"Fesh.AutoCAD.Bootstrapper Start Up Error:\r\n{e}" // can this ever be seen ?
+            MessageBox.Show($"Fesh.AutoCAD.Bootstrapper Start Up Error:\r\n{e}", "Fesh.AutoCAD installation failed", MessageBoxButton.OK, MessageBoxImage.Error) |> ignore
             1
 
 

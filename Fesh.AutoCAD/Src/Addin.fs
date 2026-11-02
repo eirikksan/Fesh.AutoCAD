@@ -22,8 +22,9 @@ module AppName =
         $"AutoCAD {year}"
 
 module DefaultCode =
-    let get(appName:string) =
-        $"""#I "C:/Program Files/Autodesk/{appName}"
+    let get() =
+        let hostDirectory = Path.GetDirectoryName(typeof<Database>.Assembly.Location).Replace('\\', '/')
+        $"""#I "{hostDirectory}"
 #r "AcDbMgd.dll"
 //#r "acdbmgdbrep.dll"
 #r "AcCui.dll"
@@ -127,7 +128,7 @@ type FeshAddin() =
                     let winHandle = Diagnostics.Process.GetCurrentProcess().MainWindowHandle
                     let canRun = fun () -> true
 
-                    let appName = "AutoCAD 20XX" //AppName.get(commandData.Application.Application.VersionNumber)
+                    let appName = "AutoCAD 2027"
                     let logo = new Uri("pack://application:,,,/Fesh.AutoCAD;component/Media32/logo.ico")
                     let hostData = {
                         hostName = appName
@@ -137,7 +138,7 @@ type FeshAddin() =
                         libFolders = [||]
                         defines = [||]
                         logo = Some logo
-                        defaultCode = Some (DefaultCode.get(appName))
+                        defaultCode = Some (DefaultCode.get())
                         hostAssembly = Some (Reflection.Assembly.GetAssembly(typeof<FeshAddin>))
                         }
 

@@ -1,8 +1,6 @@
 
 ![Logo](https://raw.githubusercontent.com/goswinr/Fesh.AutoCAD/main/Media/logo128.png)
 
-# THIS DOES NOT WORK YET IT IS JUST COPIED AND RENAMED FROM Fesh.Revit
-
 # Fesh.AutoCAD
 [![Build](https://github.com/goswinr/Fesh.AutoCAD/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/goswinr/Fesh.AutoCAD/actions/workflows/build.yml)
 ![code size](https://img.shields.io/github/languages/code-size/goswinr/Fesh.AutoCAD.svg)
@@ -20,18 +18,39 @@ See also my talk at <a href="https://www.youtube.com/watch?v=ZY-bvZZZZnE" target
 ## How to install
 
 
-Download and run the Setup.exe from [Releases](https://github.com/goswinr/Fesh.AutoCAD/releases).<br>
-Use the .NET 8 version if you have AutoCAD 2025 or later.<br>
-Use the .NET 4.8 version if you have AutoCAD 2024 or earlier.
+This build requires **AutoCAD 2027 (64-bit)** and the **.NET 10 Desktop Runtime**.
+It does not support AutoCAD 2026 or earlier, which use different .NET runtimes and APIs.
 
-Fesh.AutoCAD will automatically offer to update itself when a new version is available.
+1. Close all AutoCAD windows.
+2. Build with `dotnet build Fesh.AutoCAD.slnx -c Release`.
+3. Run `Fesh.AutoCAD.Bootstrapper/bin/Release/net10.0-windows/Fesh.AutoCAD.Bootstrapper.exe`.
+4. Wait for the installation success message, then close the installer.
+5. Start AutoCAD 2027 normally, open a drawing, and enter `FESH`.
 
-The installer is created with [Velopack](https://velopack.io) and digitally signed.
+No administrator rights are required. The bootstrapper copies the add-in and its
+dependencies into `%APPDATA%\Autodesk\ApplicationPlugins\Fesh.AutoCAD.bundle`
+and creates `PackageContents.xml`. AutoCAD discovers the bundle on subsequent
+starts and loads the editor when you run `FESH`; `NETLOAD` is not required.
+The installation is independent of the build folder after setup completes.
 
-No admin rights are required to install or run the app.<br>
-The app will be installed in `\AppData\Local\Fesh.AutoCAD`. <br>
-Setup will launch the `Fesh.AutoCAD.Bootstrapper.exe`. It will register the `Fesh.AutoCAD.dll` with AutoCAD <br>
-by creating an `Fesh.AutoCAD.addin` xml file in the AutoCAD Addins folder at `C:/ProgramData/Autodesk/AutoCAD/Addins/20XX/Fesh.AutoCAD.addin`.
+If AutoCAD asks whether to load this unsigned local build, approve it only if you
+trust the build. Do not disable `SECURELOAD`. AutoCAD must have bundle discovery
+enabled through `APPAUTOLOAD`; enterprise policies can restrict per-user plug-ins.
+
+To update a local installation, close AutoCAD, rebuild, and run the bootstrapper
+again. A new copy is activated only after all files have been copied successfully.
+Previous payload folders are retained to avoid deleting files in use. Local builds
+do not provide automatic Velopack updates.
+
+To unregister, close AutoCAD and run the bootstrapper with `--uninstall`.
+After closing the bootstrapper, you can delete the `Fesh.AutoCAD.bundle` folder
+to remove the retained files. This does not delete editor settings or scripts.
+
+## Installer tests
+
+Run `dotnet fsi Tests/Bootstrapper.Install.Tests.fsx` to test bundle registration,
+dependency copying, reinstallation, failure preservation, and unregistration in
+a temporary folder without changing your AutoCAD installation.
 
 
 ## Release Notes
